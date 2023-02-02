@@ -1,0 +1,8 @@
+The attached code is based on data analysis for a mental health treatment survey results data. 
+The dataset was picked from Kaggle (https://www.kaggle.com/datasets/osmi/mental-health-in-tech-survey)
+It develops prediction of undergoing mental heath treatment based on vairous factors using three different models :
+1. Logistics Regression
+2. CART/Decision tree
+3. Random Forest
+
+Libraries: Caret, pROC, ggplot2, dplyr, tidyr, randomForest, VIM
