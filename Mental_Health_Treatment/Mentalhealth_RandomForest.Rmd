@@ -1,0 +1,95 @@
+---
+title: "MentalHealth_Randomforest"
+output: pdf_document
+date: "2023-02-06"
+---
+
+```{r}
+file_path <- "C:/Users/harki/Documents/Quarter 3/510 Data mining and analytics/Team project/fin/Mentalhealth.csv"
+file_path <- normalizePath(file_path)
+mentalhealth.df <- read.csv(file_path, stringsAsFactors = TRUE)
+
+
+#Pre-processing
+
+# Removing index, timestamp and comment column 
+mentalhealth.df.selected <- mentalhealth.df[ -c(1,2,5,6,28) ] 
+str(mentalhealth.df.selected)
+
+#Modelling
+
+#Test train split
+train.index <- sample(1:nrow(mentalhealth.df.selected), nrow(mentalhealth.df.selected)*0.8)  
+train.df <- mentalhealth.df.selected[train.index, ]
+valid.df <- mentalhealth.df.selected[-train.index, ]
+
+
+libs <- c("dplyr", "ggplot2", "plotly", "reshape2", "magrittr", "ggthemes", "tidyr", "DT", "lubridate", "stringr", "RColorBrewer")
+lapply(libs, require, character.only = TRUE)
+
+ml.libs <- c("rpart", "rpart.plot", "party", "rattle", "partykit", "caret", "randomForest", "xgboost", "rpart.plot")
+lapply(ml.libs, require, character.only = TRUE)
+
+ad_libs <- c("VIM")
+lapply(ad_libs, require, character.only = TRUE)
+
+ml.libs.add <- c("class", "fastknn", "caTools", "glmnet")
+lapply(ml.libs.add, require, character.only = TRUE)
+
+
+#CART
+set.seed(5)
+
+#Default classification tree
+default.ct <- rpart(treatment ~ . , data = train.df, method = "class")
+rpart.plot(default.ct, type = 4, fallen.leaves = FALSE, extra = 4)
+default.ct.point.pred <- predict(default.ct, valid.df, type = "class", positive = "Yes")
+confusionMatrix(default.ct.point.pred, factor(valid.df$treatment))
+
+#Improved CART (with few useful features)
+mentalhealth_all_var <- treatment ~
+  Gender+
+  family_history+
+  benefits+
+  care_options+
+  anonymity+
+  Age+
+  wellness_program+
+  seek_help+
+  tech_company+
+  leave+
+  phys_health_consequence+
+  coworkers+
+  supervisor
+
+rpart_all_variables <- rpart(mentalhealth_all_var,
+                             data=train.df,
+                             method = "class")
+
+rpart.plot::rpart.plot(rpart_all_variables, type = 4, fallen.leaves = FALSE, extra = 5)
+
+full.ct <- rpart(mentalhealth_all_var, data = train.df, method = "class", control = rpart.control(cp = -1, minsplit = 4))
+my.ct <- rpart(mentalhealth_all_var, data = train.df, method = "class", control = rpart.control(maxdepth =  3, minbucket =  30))
+
+rpart.plot(my.ct, extra = 1)
+
+#Interpret fitted tree
+my.ct$variable.importance
+
+#Performance evaluation
+
+default.ct.point.pred <- predict(rpart_all_variables, valid.df, type = "class")
+confusionMatrix(default.ct.point.pred, factor(valid.df$treatment))
+
+
+#Random Forest
+
+treeRF_mentalhealth <- randomForest(mentalhealth_all_var, data = train.df, ntree=500, proximity = T, mtry =2)
+dataimp_spam <- varImpPlot(treeRF_mentalhealth, main = "Importance of each variable")
+
+is.numeric(mentalhealth_all_var)
+
+treeRF_mentalhealth
+
+RF.pred <- predict(treeRF_mentalhealth, valid.df)
+confusionMatrix(RF.pred, factor(valid.df$treatment))
