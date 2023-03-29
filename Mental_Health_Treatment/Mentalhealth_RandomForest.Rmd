@@ -37,7 +37,7 @@ ml.libs.add <- c("class", "fastknn", "caTools", "glmnet")
 lapply(ml.libs.add, require, character.only = TRUE)
 
 
-#CART
+#CART Model
 set.seed(5)
 
 #Default classification tree
@@ -82,7 +82,7 @@ default.ct.point.pred <- predict(rpart_all_variables, valid.df, type = "class")
 confusionMatrix(default.ct.point.pred, factor(valid.df$treatment))
 
 
-#Random Forest
+#Random Forest Model
 
 treeRF_mentalhealth <- randomForest(mentalhealth_all_var, data = train.df, ntree=500, proximity = T, mtry =2)
 dataimp_spam <- varImpPlot(treeRF_mentalhealth, main = "Importance of each variable")
